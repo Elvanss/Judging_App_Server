@@ -5,11 +5,12 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.antlr.v4.runtime.misc.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 @Entity
 @NoArgsConstructor
@@ -19,55 +20,60 @@ import java.util.List;
 @Table(name = "project")
 public class Project implements Serializable {
 
+    private static final Logger log = LoggerFactory.getLogger(Project.class);
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "title", length = 20)
+    @NotNull
+    @Column(name = "title")
     private String title;
 
-    @Temporal(TemporalType.DATE)
+    @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "create_at")
     private Date createAt;
 
-    @Temporal(TemporalType.DATE)
+    @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "modify_at")
     private Date modifyAt;
 
-    @Column(name = "modify_by", length = 20)
+    @Column(name = "modify_by")
     private String modifyBy;
 
-    @Column(name = "create_by", length = 20)
+    @Column(name = "create_by")
     private String createBy;
 
-    @Column(name = "description", length = 512)
+    @Column(name = "description")
     private String description;
 
-    @OneToMany(mappedBy = "project")
+    @OneToMany(mappedBy = "project", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Semester> semesters = new ArrayList<>();
 
-    @OneToMany(mappedBy = "project")
+    @OneToMany(mappedBy = "project", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Student> students = new ArrayList<>();
 
     @ManyToMany(mappedBy = "projects")
-    private List<Judge> judges = new ArrayList<>();
-
-    /* Methods for arraylist: semesters, students, judges
-    * GetTotalNumber
-    * Add
-    * Remove
-     */
+    private Set<Judge> judges = new HashSet<>();
 
     public Integer getTotalNumberOfSemesters() {
         return semesters.size();
     }
 
     public void addSemester(Semester semester) {
+        if (semester == null) {
+            log.error("Attempt to add a null semester to the project");
+            return;
+        }
         this.semesters.add(semester);
         semester.setProject(this);
     }
 
     public void removeSemester(Semester semester) {
+        if (semester == null || !this.semesters.contains(semester)) {
+            log.error("Attempt to remove a non-existent semester");
+            return;
+        }
         this.semesters.remove(semester);
         semester.setProject(null);
     }
@@ -77,11 +83,19 @@ public class Project implements Serializable {
     }
 
     public void addStudent(Student student) {
+        if (student == null) {
+            log.error("Attempt to add a null student to the project");
+            return;
+        }
         this.students.add(student);
         student.setProject(this);
     }
 
     public void removeStudent(Student student) {
+        if (student == null || !this.students.contains(student)) {
+            log.error("Attempt to remove a non-existent student");
+            return;
+        }
         this.students.remove(student);
         student.setProject(null);
     }
@@ -89,15 +103,5 @@ public class Project implements Serializable {
     public Integer getTotalNumberOfJudges() {
         return judges.size();
     }
-
-    public void addJudge(Judge judge) {
-        this.judges.add(judge);
-        judge.getProjects().add(this);
-    }
-
-    public void removeJudge(Judge judge) {
-        this.judges.remove(judge);
-        judge.getProjects().remove(this);
-    }
-
 }
+

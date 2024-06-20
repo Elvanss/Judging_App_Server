@@ -7,9 +7,9 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.sql.Date;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @NoArgsConstructor
@@ -64,7 +64,7 @@ public class Judge implements Serializable {
             joinColumns = @JoinColumn(name = "judge_ID"),
             inverseJoinColumns = @JoinColumn(name = "project_ID")
     )
-    private List<Project> projects = new ArrayList<>();
+    private Set<Project> projects = new HashSet<>();
 
     public Integer getNumberOfProject() {
         return projects.size();
